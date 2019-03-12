@@ -13,6 +13,7 @@ public class BubbleTextView extends TextView {
 
     private Drawable mDeleteButtonDrawable;
     private boolean mDeleteButtonVisible = false;
+    private DiskButtonInfo mInfo;
 
     public BubbleTextView(Context context) {
         this(context, null);
@@ -29,7 +30,26 @@ public class BubbleTextView extends TextView {
         drawDeleteButton(canvas);
     }
 
-    private void  drawDeleteButton(Canvas canvas) {
+    public void createButtonFromInfo(DiskButtonInfo info) {
+        mInfo = info;
+        Drawable drawable = getResources().getDrawable(info.drawableId);
+        if (info.isFront) {
+            drawable.setBounds(0, 0, 76, 76);
+            setPadding(0, 12, 0, 0);
+            setText(info.text);
+            setTag(info);
+        } else {
+            drawable.setBounds(0, 0, 40, 40);
+            setTag(info);
+        }
+        setCompoundDrawables(null, drawable, null, null);
+    }
+
+    public DiskButtonInfo getButtonInfo() {
+        return mInfo;
+    }
+
+    private void drawDeleteButton(Canvas canvas) {
         if (mDeleteButtonVisible) {
             int deleteButtonWidth = mDeleteButtonDrawable.getIntrinsicWidth();
             int deleteButtonHeight = mDeleteButtonDrawable.getIntrinsicHeight();
@@ -44,8 +64,10 @@ public class BubbleTextView extends TextView {
             canvas.restore();
         }
     }
+
     public void setDeleteButtonVisibility(boolean visiable) {
         mDeleteButtonVisible = visiable;
+        invalidate();
     }
 
     public boolean getDeleteButtonVisibility() {

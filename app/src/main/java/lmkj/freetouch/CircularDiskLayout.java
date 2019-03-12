@@ -4,11 +4,15 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+
+import java.util.Arrays;
 
 public class CircularDiskLayout extends ViewGroup {
 
@@ -16,6 +20,8 @@ public class CircularDiskLayout extends ViewGroup {
     private static final String TAG = "CircularDiskLayout" ;
     private float mStartAngle = 0, mDownAngle, mTempAngle;
     private Paint mPaint = new Paint();
+    protected enum State { NONE, NORMAL, MODIFY }
+    protected State mState = State.NORMAL;
 
     public CircularDiskLayout(Context context) {
         super(context, null);
@@ -23,10 +29,39 @@ public class CircularDiskLayout extends ViewGroup {
 
     public CircularDiskLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
+
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setAntiAlias(true);
         mPaint.setColor(Color.RED);
+        ImageView imageView = new ImageView(context);
+        LayoutParams lp = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+        imageView.setLayoutParams(lp);
+        imageView.setImageDrawable(context.getResources().getDrawable(R.drawable.ic_middle));
+        imageView.setClickable(true);
+        addView(imageView);
 //        setWillNotDraw(false);
+    }
+
+    public void setModifyMode(boolean yes) {
+        mState = yes ? State.MODIFY : State.NORMAL;
+        for (int i = 0; i < getChildCount(); i++) {
+            View child = getChildAt(i);
+            if (child instanceof BubbleTextView) {
+                DiskButtonInfo info = ((BubbleTextView) child).getButtonInfo();
+                if (info.isRemove) {
+                    if (yes) {
+                        child.setVisibility(VISIBLE);
+                    } else {
+                        child.setVisibility(GONE);
+                    }
+                }
+            }
+        }
+        requestLayout();
+    }
+
+    public boolean isModifyMode() {
+        return mState == State.MODIFY;
     }
 
     @Override
@@ -43,30 +78,70 @@ public class CircularDiskLayout extends ViewGroup {
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        int count = getChildCount();
 
-        float piece = 360 / count;
+        int front_count = 0, front_index = 0;
+        int back_count = 0, back_index = 0;
+        int[] frontLocation = new int[8];
+        for (int i = 0; i < getChildCount(); i++) {
+            View view = getChildAt(i);
+            if (view instanceof BubbleTextView) {
+                DiskButtonInfo info = ((BubbleTextView) view).getButtonInfo();
+                if (info.isRemove) continue;
+                if (info.isFront) {
+                    frontLocation[front_count++] = info.index;
+                } else {
+                    back_count ++;
+                }
+            }
+        }
+
+        float front_piece = 360 / front_count;
+        float back_piece = 360 / back_count;
 
         for (int i = 0; i < getChildCount(); i++) {
             View view = getChildAt(i);
-            float sin= (float) Math.sin(Math.toRadians(mStartAngle + piece * i));
-            float cos = (float) Math.cos(Math.toRadians(mStartAngle + piece * i));
+            if (view instanceof BubbleTextView) {
+                if (view.getVisibility() == GONE) continue;
+                DiskButtonInfo info = ((BubbleTextView) view).getButtonInfo();
+                if (info.isFront) {
+                    float angle = 0;
+                    if (isModifyMode()) {
+                        angle = 45 * info.index;
+                        ((BubbleTextView) view).setDeleteButtonVisibility(info.canDelete ? true : false);
+                    } else {
+                        angle = front_piece * front_index++;
+                        ((BubbleTextView) view).setDeleteButtonVisibility(false);
+                    }
 
-            int drawX = (int) (cos * 208) + mRadius;
-            int drawY = (int) (sin * 208) + mRadius;
+                    float sin= (float) Math.sin(Math.toRadians(mStartAngle + angle));
+                    float cos = (float) Math.cos(Math.toRadians(mStartAngle + angle));
+                    int drawX = (int) (cos * 208) + mRadius;
+                    int drawY = (int) (sin * 208) + mRadius;
+                    view.layout(drawX - 64, drawY - 64, drawX - 64 + 128, drawY - 64 + 128);
+                } else {
+                    float sin= (float) Math.sin(Math.toRadians(back_piece * (info.index % 10)));
+                    float cos = (float) Math.cos(Math.toRadians(back_piece * (info.index % 10)));
+                    int drawX = (int) (cos * 109) + mRadius;
+                    int drawY = (int) (sin * 109) + mRadius;
 
-            view.layout(drawX - 64, drawY - 64, drawX - 64 + 128, drawY - 64 + 128);
+                    view.layout(drawX - 20, drawY - 20, drawX - 20 + 40, drawY - 20 + 40);
+                }
+            }
+
+            if (view instanceof ImageView) {
+                view.layout(mRadius - 46, mRadius - 46, mRadius + 46, mRadius + 46);
+            }
         }
     }
 
-    @Override
-    protected void onDraw(Canvas canvas) {
-
-        super.onDraw(canvas);
-        canvas.drawCircle(mRadius, mRadius, mRadius, mPaint);
-        canvas.drawCircle(mRadius, mRadius, 134, mPaint);
-        canvas.drawCircle(mRadius, mRadius, 84, mPaint);
-    }
+//    @Override
+//    protected void onDraw(Canvas canvas) {
+//
+//        super.onDraw(canvas);
+//        canvas.drawCircle(mRadius, mRadius, mRadius, mPaint);
+//        canvas.drawCircle(mRadius, mRadius, 134, mPaint);
+//        canvas.drawCircle(mRadius, mRadius, 84, mPaint);
+//    }
 
 
     @Override
@@ -77,7 +152,6 @@ public class CircularDiskLayout extends ViewGroup {
             case MotionEvent.ACTION_DOWN:
                 mDownAngle = computeCurrentAngle(x, y);
                 mTempAngle = mStartAngle;
-                Log.d(TAG, "huangqw onInterceptTouchEvent: ACTION_DOWN " + mDownAngle);
                 break;
             case MotionEvent.ACTION_MOVE:
                 float diff = computeCurrentAngle(x, y) - mDownAngle;
@@ -96,13 +170,11 @@ public class CircularDiskLayout extends ViewGroup {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 mDownAngle = computeCurrentAngle(x, y);
-                Log.d(TAG, "huangqw onTouchEvent: " + mDownAngle);
                 mTempAngle = mStartAngle;
                 return true;
             case MotionEvent.ACTION_MOVE:
                 float diff = computeCurrentAngle(x, y) - mDownAngle;
                 mStartAngle = mTempAngle + diff;
-                Log.d(TAG, "huangqw onTouchEvent: start = " + mStartAngle);
                 requestLayout();
                 break;
             case MotionEvent.ACTION_CANCEL:
@@ -123,8 +195,10 @@ public class CircularDiskLayout extends ViewGroup {
         for (int i = 0; i < getChildCount(); i++) {
             View view = getChildAt(i);
             if (view instanceof BubbleTextView) {
-                ((BubbleTextView) view).setDeleteButtonVisibility(visible);
-                ((BubbleTextView) view).invalidate();
+                if (((BubbleTextView) view).getButtonInfo().isFront) {
+                    ((BubbleTextView) view).setDeleteButtonVisibility(visible);
+                    ((BubbleTextView) view).invalidate();
+                }
             }
         }
     }
