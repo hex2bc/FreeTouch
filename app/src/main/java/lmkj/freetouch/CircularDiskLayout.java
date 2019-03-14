@@ -19,11 +19,9 @@ public class CircularDiskLayout extends ViewGroup {
     protected enum State { NONE, NORMAL, MODIFY }
     protected State mState = State.NORMAL;
     private ImageView mMidBtn;
-    private Drawable mMidBtnDef;
-    private Drawable mMidBtnChange;
 
     public CircularDiskLayout(Context context) {
-        super(context, null);
+        this(context, null);
     }
 
     public CircularDiskLayout(Context context, AttributeSet attrs) {
@@ -32,15 +30,6 @@ public class CircularDiskLayout extends ViewGroup {
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setAntiAlias(true);
         mPaint.setColor(Color.RED);
-        mMidBtn = new ImageView(context);
-        LayoutParams lp = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-        mMidBtn.setLayoutParams(lp);
-        mMidBtnDef = context.getResources().getDrawable(R.drawable.ic_middle);
-        mMidBtnChange = context.getResources().getDrawable(R.drawable.ic_change);
-        mMidBtn.setImageDrawable(context.getResources().getDrawable(R.drawable.ic_middle));
-        mMidBtn.setClickable(true);
-
-        addView(mMidBtn);
 //        setWillNotDraw(false);
     }
 
@@ -59,19 +48,22 @@ public class CircularDiskLayout extends ViewGroup {
                 }
             }
         }
-        if (!yes) {
-            setExchange(false);
-        }
         requestLayout();
     }
 
-    public void setExchange( boolean change) {
-        if (change) {
-            mMidBtn.setImageDrawable(mMidBtnChange);
-        } else {
-            mMidBtn.setImageDrawable(mMidBtnDef);
+    @Override
+    public void onViewAdded(View child) {
+        if (child instanceof BubbleTextView) {
+            DiskButtonInfo info = ((BubbleTextView) child).getButtonInfo();
+            if (info.isRemove) {
+                if (isModifyMode()) {
+                    child.setVisibility(VISIBLE);
+                } else {
+                    child.setVisibility(GONE);
+                }
+            }
         }
-        requestLayout();
+        super.onViewAdded(child);
     }
 
     public boolean isModifyMode() {
@@ -107,7 +99,7 @@ public class CircularDiskLayout extends ViewGroup {
                 }
             }
         }
-
+        if (front_count < 1 || back_count < 1) return;
         float front_piece = 360 / front_count;
         float back_piece = 360 / back_count;
 
