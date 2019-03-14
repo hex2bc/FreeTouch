@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -61,7 +63,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void createButton(DiskButtonInfo info) {
         LayoutInflater mInflater = getLayoutInflater();
-        BubbleTextView tv = (BubbleTextView) mInflater.inflate(R.layout.disk_icon_style, mCircularDiskLayout, false);
+        BubbleTextView tv = (BubbleTextView) mInflater.inflate(R.layout.disk_icon_style,
+                mCircularDiskLayout, false);
         tv.createButtonFromInfo(info);
         if (info.isFront) {
             tv.setOnClickListener(this);
@@ -71,7 +74,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void updateDiskView() {
-        mCircularDiskLayout.removeAllViews();
+        mCircularDiskLayout.removeViews(1, mCircularDiskLayout.getChildCount() - 1);
         createView();
     }
 
@@ -80,6 +83,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         Object tag = v.getTag();
         if (tag.equals(mMore)) {
             exchange();
+            mCircularDiskLayout.setExchange(true);
         } else if (mCircularDiskLayout.isModifyMode()) {
             if (tag instanceof DiskButtonInfo) {
                 deleteButton((DiskButtonInfo) tag);

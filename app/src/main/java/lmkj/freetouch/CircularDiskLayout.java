@@ -1,18 +1,14 @@
 package lmkj.freetouch;
 
 import android.content.Context;
-import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-
-import java.util.Arrays;
 
 public class CircularDiskLayout extends ViewGroup {
 
@@ -22,6 +18,9 @@ public class CircularDiskLayout extends ViewGroup {
     private Paint mPaint = new Paint();
     protected enum State { NONE, NORMAL, MODIFY }
     protected State mState = State.NORMAL;
+    private ImageView mMidBtn;
+    private Drawable mMidBtnDef;
+    private Drawable mMidBtnChange;
 
     public CircularDiskLayout(Context context) {
         super(context, null);
@@ -33,12 +32,15 @@ public class CircularDiskLayout extends ViewGroup {
         mPaint.setStyle(Paint.Style.STROKE);
         mPaint.setAntiAlias(true);
         mPaint.setColor(Color.RED);
-        ImageView imageView = new ImageView(context);
+        mMidBtn = new ImageView(context);
         LayoutParams lp = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-        imageView.setLayoutParams(lp);
-        imageView.setImageDrawable(context.getResources().getDrawable(R.drawable.ic_middle));
-        imageView.setClickable(true);
-        addView(imageView);
+        mMidBtn.setLayoutParams(lp);
+        mMidBtnDef = context.getResources().getDrawable(R.drawable.ic_middle);
+        mMidBtnChange = context.getResources().getDrawable(R.drawable.ic_change);
+        mMidBtn.setImageDrawable(context.getResources().getDrawable(R.drawable.ic_middle));
+        mMidBtn.setClickable(true);
+
+        addView(mMidBtn);
 //        setWillNotDraw(false);
     }
 
@@ -56,6 +58,18 @@ public class CircularDiskLayout extends ViewGroup {
                     }
                 }
             }
+        }
+        if (!yes) {
+            setExchange(false);
+        }
+        requestLayout();
+    }
+
+    public void setExchange( boolean change) {
+        if (change) {
+            mMidBtn.setImageDrawable(mMidBtnChange);
+        } else {
+            mMidBtn.setImageDrawable(mMidBtnDef);
         }
         requestLayout();
     }
@@ -81,14 +95,13 @@ public class CircularDiskLayout extends ViewGroup {
 
         int front_count = 0, front_index = 0;
         int back_count = 0, back_index = 0;
-        int[] frontLocation = new int[8];
         for (int i = 0; i < getChildCount(); i++) {
             View view = getChildAt(i);
             if (view instanceof BubbleTextView) {
                 DiskButtonInfo info = ((BubbleTextView) view).getButtonInfo();
                 if (info.isRemove) continue;
                 if (info.isFront) {
-                    frontLocation[front_count++] = info.index;
+                    front_count++;
                 } else {
                     back_count ++;
                 }
@@ -118,9 +131,10 @@ public class CircularDiskLayout extends ViewGroup {
                     int drawX = (int) (cos * 208) + mRadius;
                     int drawY = (int) (sin * 208) + mRadius;
                     view.layout(drawX - 64, drawY - 64, drawX - 64 + 128, drawY - 64 + 128);
-                } else {
-                    float sin= (float) Math.sin(Math.toRadians(back_piece * (info.index % 10)));
-                    float cos = (float) Math.cos(Math.toRadians(back_piece * (info.index % 10)));
+                } else if (!info.isFront && !info.isRemove) {
+                    float angle = back_piece * front_index++;
+                    float sin = (float) Math.sin(Math.toRadians(angle));
+                    float cos = (float) Math.cos(Math.toRadians(angle));
                     int drawX = (int) (cos * 109) + mRadius;
                     int drawY = (int) (sin * 109) + mRadius;
 
