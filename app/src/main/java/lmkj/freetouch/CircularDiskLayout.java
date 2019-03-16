@@ -3,7 +3,6 @@ package lmkj.freetouch;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -18,7 +17,6 @@ public class CircularDiskLayout extends ViewGroup {
     private Paint mPaint = new Paint();
     protected enum State { NONE, NORMAL, MODIFY }
     protected State mState = State.NORMAL;
-    private ImageView mMidBtn;
 
     public CircularDiskLayout(Context context) {
         this(context, null);

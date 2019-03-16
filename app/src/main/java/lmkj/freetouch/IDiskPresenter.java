@@ -1,5 +1,7 @@
 package lmkj.freetouch;
 
+import android.content.Context;
+
 import java.util.ArrayList;
 
 public interface IDiskPresenter {
@@ -9,5 +11,6 @@ public interface IDiskPresenter {
     void moreButtonClick();
     void middleButtonClick();
     void longClick();
+    void buttonClick(Context context, DiskButtonInfo info);
     boolean onBackPress();
 }

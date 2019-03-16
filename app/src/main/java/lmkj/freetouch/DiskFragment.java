@@ -2,7 +2,6 @@ package lmkj.freetouch;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -10,13 +9,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
 
 
 public class DiskFragment extends Fragment implements View.OnClickListener, View.OnLongClickListener,
@@ -97,13 +91,11 @@ public class DiskFragment extends Fragment implements View.OnClickListener, View
 
     @Override
     public void onClick(View v) {
-        Object tag = v.getTag();
         if (v.equals(mMidBtn)) {
             mDiskPresenter.middleButtonClick();
         }
-        if (tag == null) return;
-        if (tag instanceof DiskButtonInfo) {
-            DiskButtonInfo info = ((DiskButtonInfo) tag);
+        if (v instanceof BubbleTextView) {
+            DiskButtonInfo info = ((BubbleTextView) v).getButtonInfo();
             if (info.text.equals("More")) {
                 mDiskPresenter.moreButtonClick();
             } else if (mCircularDiskLayout.isModifyMode()) {
@@ -112,8 +104,12 @@ public class DiskFragment extends Fragment implements View.OnClickListener, View
                 } else {
                     mDiskPresenter.deleteButtonClick(info);
                 }
-            } else if (tag instanceof DiskButtonInfo) {
-                Toast.makeText(getActivity(), info.text, Toast.LENGTH_SHORT).show();
+            } else {
+                int id = info.drawableId;
+                mDiskPresenter.buttonClick(mContext, info);
+                if (id != info.drawableId) {
+                    ((BubbleTextView) v).createButtonFromInfo(info);
+                }
             }
         }
     }
