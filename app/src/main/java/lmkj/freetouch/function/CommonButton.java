@@ -12,6 +12,10 @@ public class CommonButton extends DiskButtonInfo {
         super(index, drawableId, text, front);
     }
 
+    public CommonButton(int index, int drawableId, String text, boolean front, boolean remove, boolean del) {
+        super(index, drawableId, text, front, remove, del);
+    }
+
     @Override
     public void execute(Context context) {
         Toast.makeText(context, super.text, Toast.LENGTH_SHORT).show();

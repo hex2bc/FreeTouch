@@ -2,10 +2,10 @@ package lmkj.freetouch;
 
 import android.content.Context;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public interface IDiskPresenter {
-    ArrayList<DiskButtonInfo> getLayoutView();
+    List<DiskButtonInfo> getLayoutView();
     void addButtonClick(int index);
     void deleteButtonClick(DiskButtonInfo info);
     void moreButtonClick();

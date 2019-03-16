@@ -4,51 +4,25 @@ import android.content.Context;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 
-import lmkj.freetouch.function.BluetoothButton;
-import lmkj.freetouch.function.CommonButton;
-import lmkj.freetouch.function.WifiButton;
+import lmkj.freetouch.local.DiskLocalDataSource;
 
 public class DiskPresenter implements IDiskPresenter {
     private String TAG = "DiskPresenter";
     private IDiskView mDiskView;
-    private DiskModel mDiskModel;
-    private ArrayList<DiskButtonInfo> mDiskButtons =  new ArrayList<>();
     boolean isExchange = false;
     boolean isModify = false;
+    DiskLocalDataSource mDataDb;
 
-    public DiskPresenter(IDiskView diskView) {
+    public DiskPresenter(IDiskView diskView, DiskLocalDataSource tasks) {
         mDiskView = diskView;
-        mDiskModel = new DiskModel(this);
-        initViews();
-    }
-
-    private void initViews() {
-        mDiskButtons.add(new CommonButton(0, R.drawable.ic_camera, "Camera", true));
-        DiskButtonInfo mMore = new CommonButton(1, R.drawable.ic_more, "More", true);
-        mMore.canDelete = false;
-        mDiskButtons.add(mMore);
-        mDiskButtons.add(new CommonButton(2, R.drawable.ic_home, "Home", true));
-        mDiskButtons.add(new CommonButton(3, R.drawable.ic_calculator, "Calculator", true));
-        mDiskButtons.add(new CommonButton(4, R.drawable.ic_light_off, "Light", true));
-        mDiskButtons.add(new CommonButton(5, R.drawable.ic_lock, "Lock", true));
-        mDiskButtons.add(new CommonButton(6, R.drawable.ic_setting, "Setting", true));
-        mDiskButtons.add(new CommonButton(7, R.drawable.ic_ringling, "Ringling", true));
-        mDiskButtons.add(new CommonButton(10, R.drawable.ic_hotspot_off, "Hot spot", false));
-        mDiskButtons.add(new CommonButton(11, R.drawable.ic_back, "Back", false));
-        mDiskButtons.add(new CommonButton(12, R.drawable.ic_home, "Home", false));
-        mDiskButtons.add(new CommonButton(13, R.drawable.ic_file, "File Manager", false));
-        mDiskButtons.add(new CommonButton(14, R.drawable.ic_network_on, "Network", false));
-        mDiskButtons.add(new CommonButton(15, R.drawable.ic_rotation, "Rotation", false));
-        mDiskButtons.add(new BluetoothButton(16, false));
-        mDiskButtons.add(new WifiButton(17, false));
+        mDataDb = tasks;
     }
 
     @Override
     public ArrayList<DiskButtonInfo> getLayoutView() {
-        return mDiskButtons;
+        return mDataDb.getDisk();
     }
 
     @Override
@@ -62,6 +36,7 @@ public class DiskPresenter implements IDiskPresenter {
         if (isModify) {
             if (info.canDelete) {
                 info.remove();
+                mDataDb.refreshDisk(info);
                 mDiskView.updateDiskView();
             }
         }
@@ -118,10 +93,12 @@ public class DiskPresenter implements IDiskPresenter {
 
     private void exchange() {
         isExchange = !isExchange;
-        Iterator<DiskButtonInfo> iter = mDiskButtons.iterator();
+        ArrayList<DiskButtonInfo> tasks = mDataDb.getDisk();
+        Iterator<DiskButtonInfo> iter = tasks.iterator();
         while (iter.hasNext()) {
             DiskButtonInfo info = iter.next();
             info.isFront = !info.isFront;
+            mDataDb.refreshDisk(info);
         }
     }
 }
