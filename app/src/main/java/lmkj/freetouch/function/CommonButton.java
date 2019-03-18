@@ -4,7 +4,6 @@ import android.content.Context;
 import android.widget.Toast;
 
 import lmkj.freetouch.DiskButtonInfo;
-import lmkj.freetouch.R;
 
 public class CommonButton extends DiskButtonInfo {
 

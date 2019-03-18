@@ -7,15 +7,16 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import lmkj.freetouch.local.DiskLocalDataSource;
+import lmkj.freetouch.local.SaveObjectDataSource;
 
 public class DiskPresenter implements IDiskPresenter {
     private String TAG = "DiskPresenter";
     private IDiskView mDiskView;
-    boolean isExchange = false;
-    boolean isModify = false;
-    DiskLocalDataSource mDataDb;
+    private boolean isExchange = false;
+    private boolean isModify = false;
+    private SaveObjectDataSource mDataDb;
 
-    public DiskPresenter(IDiskView diskView, DiskLocalDataSource tasks) {
+    public DiskPresenter(IDiskView diskView, SaveObjectDataSource tasks) {
         mDiskView = diskView;
         mDataDb = tasks;
     }

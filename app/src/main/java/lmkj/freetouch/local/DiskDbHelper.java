@@ -29,13 +29,22 @@ public class DiskDbHelper extends SQLiteOpenHelper {
                         DiskEntry.COLUMN_NAME_REMOVE + BOOLEAN_TYPE +
                         " )";
 
+    private static final String SQL_CREATE_CLASS_ENTRIES =
+            "CREATE TABLE if not exists " + DiskEntry.TABLE_CLASS_NAME + " (" +
+                    DiskEntry._ID + " integer PRIMARY KEY autoincrement," +
+                    DiskEntry.COLUMN_NAME_ENTRY_ID + TEXT_TYPE + COMMA_SEP +
+                    DiskEntry.COLUMN_NAME_CLASS_DATA + TEXT_TYPE +
+                    " )";
 
     public DiskDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL(SQL_CREATE_ENTRIES);
+//        db.execSQL(SQL_CREATE_ENTRIES);
+//        String sql_class_table="create table if not exists classtable(_id integer primary key autoincrement,classtabledata text)";
+        db.execSQL(SQL_CREATE_CLASS_ENTRIES);
+
     }
 
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -54,5 +63,8 @@ public class DiskDbHelper extends SQLiteOpenHelper {
         public static final String COLUMN_NAME_FRONT = "front";
         public static final String COLUMN_NAME_REMOVE = "remove";
         public static final String COLUMN_NAME_CAN_DELETE = "candelete";
+
+        public static final String TABLE_CLASS_NAME = "classtable";
+        public static final String COLUMN_NAME_CLASS_DATA = "classdata";
     }
 }

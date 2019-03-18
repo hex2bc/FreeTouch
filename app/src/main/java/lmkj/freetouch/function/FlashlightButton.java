@@ -9,6 +9,7 @@ public class FlashlightButton extends DiskButtonInfo {
 
     private static int mOn = R.drawable.ic_light_on;
     private static int mOff = R.drawable.ic_light_off;
+    private boolean On = false;
 
     public FlashlightButton(int i, boolean front) {
         this(i, mOff, "Light", front);
@@ -21,7 +22,12 @@ public class FlashlightButton extends DiskButtonInfo {
 
     @Override
     public void execute(Context context) {
-
+        On = !On;
+        if (On) {
+            drawableId = mOn;
+        } else {
+            drawableId = mOff;
+        }
     }
 
     @Override

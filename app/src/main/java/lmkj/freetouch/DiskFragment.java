@@ -13,6 +13,7 @@ import android.widget.ImageView;
 import java.util.ArrayList;
 
 import lmkj.freetouch.local.DiskLocalDataSource;
+import lmkj.freetouch.local.SaveObjectDataSource;
 
 public class DiskFragment extends Fragment implements View.OnClickListener, View.OnLongClickListener,
         IDiskView {
@@ -38,7 +39,7 @@ public class DiskFragment extends Fragment implements View.OnClickListener, View
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext = getActivity();
-        mDiskPresenter = new DiskPresenter(this, DiskLocalDataSource.getInstance(mContext));
+        mDiskPresenter = new DiskPresenter(this, SaveObjectDataSource.getInstance(mContext));
         mMidBtnDef = mContext.getResources().getDrawable(R.drawable.ic_middle);
         mMidBtnChange = mContext.getResources().getDrawable(R.drawable.ic_change);
     }

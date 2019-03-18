@@ -81,8 +81,7 @@ public class DiskLocalDataSource implements DiskDataSource {
             while (c.moveToNext()) {
                 String itemId = c.getString(c.getColumnIndexOrThrow(DiskEntry.COLUMN_NAME_ENTRY_ID));
                 String title = c.getString(c.getColumnIndexOrThrow(DiskEntry.COLUMN_NAME_TITLE));
-                int drawable =
-                        c.getInt(c.getColumnIndexOrThrow(DiskEntry.COLUMN_NAME_DRAWABLE_ID));
+                int drawable = c.getInt(c.getColumnIndexOrThrow(DiskEntry.COLUMN_NAME_DRAWABLE_ID));
                 boolean front = c.getInt(c.getColumnIndexOrThrow(DiskEntry.COLUMN_NAME_FRONT)) == 1;
                 boolean remove = c.getInt(c.getColumnIndexOrThrow(DiskEntry.COLUMN_NAME_REMOVE)) == 1;
                 boolean canDelete = c.getInt(c.getColumnIndexOrThrow(DiskEntry.COLUMN_NAME_CAN_DELETE)) == 1;
