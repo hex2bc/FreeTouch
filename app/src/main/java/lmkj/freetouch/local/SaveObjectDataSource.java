@@ -106,7 +106,20 @@ public class SaveObjectDataSource implements DiskDataSource  {
 
         DiskButtonInfo disk = null;
         SQLiteDatabase database = mDbHelper.getReadableDatabase();
-        Cursor cursor = database.rawQuery("select * from " + DiskEntry.TABLE_CLASS_NAME, null);
+
+        String[] projection = {
+                DiskEntry.COLUMN_NAME_ENTRY_ID,
+                DiskEntry.COLUMN_NAME_CLASS_DATA
+        };
+
+        String selection = DiskEntry.COLUMN_NAME_ENTRY_ID + " LIKE ?";
+        String[] selectionArgs = {diskId};
+
+        Cursor cursor = database.query(
+                DiskEntry.TABLE_CLASS_NAME, projection, selection, selectionArgs, null, null, null);
+
+
+//        Cursor cursor = database.rawQuery("select * from " + DiskEntry.TABLE_CLASS_NAME, null);
         if (cursor != null) {
             while (cursor.moveToNext()) {
                 byte data[] = cursor.getBlob(cursor.getColumnIndex(DiskEntry.COLUMN_NAME_CLASS_DATA));

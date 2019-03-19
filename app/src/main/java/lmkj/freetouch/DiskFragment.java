@@ -1,6 +1,7 @@
 package lmkj.freetouch;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -102,6 +103,10 @@ public class DiskFragment extends Fragment implements View.OnClickListener, View
             } else if (mCircularDiskLayout.isModifyMode()) {
                 if (info.isRemove) {
                     mDiskPresenter.addButtonClick(info.index);
+                    Intent intent = new Intent(Intent.ACTION_MAIN);
+                    intent.putExtra("index", info.index);
+                    intent.setClass(getContext(), SettingsActivity.class);
+                    startActivityForResult(intent, 1);
                 } else {
                     mDiskPresenter.deleteButtonClick(info);
                 }
@@ -113,6 +118,12 @@ public class DiskFragment extends Fragment implements View.OnClickListener, View
                 }
             }
         }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        mDiskPresenter.onBackPress();
+        updateDiskView();
     }
 
     @Override
