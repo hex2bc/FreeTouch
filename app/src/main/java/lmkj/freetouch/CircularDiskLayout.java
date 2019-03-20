@@ -4,8 +4,11 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
@@ -17,6 +20,8 @@ public class CircularDiskLayout extends ViewGroup {
     private Paint mPaint = new Paint();
     protected enum State { NONE, NORMAL, MODIFY }
     protected State mState = State.NORMAL;
+    private OnBackPressedListener mListener;
+    private boolean isTouchOutOfBounds = false;
 
     public CircularDiskLayout(Context context) {
         this(context, null);
@@ -167,27 +172,74 @@ public class CircularDiskLayout extends ViewGroup {
         return super.onInterceptTouchEvent(event);
     }
 
+    public void setOnBackPressListener(OnBackPressedListener listener) {
+        mListener = listener;
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+            Log.d(TAG, "huangqw dispatchKeyEvent: KEYCODE_BACK");
+            if (mListener != null && event.getAction() == KeyEvent.ACTION_UP) {
+                mListener.onBackPressed();
+            }
+            return true;
+        }
+        return super.dispatchKeyEvent(event);
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         float x = event.getX();
         float y = event.getY();
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                mDownAngle = computeCurrentAngle(x, y);
-                mTempAngle = mStartAngle;
+                if (isOutOfBounds(getContext(), event)) {
+                    isTouchOutOfBounds = true;
+                } else {
+                    mDownAngle = computeCurrentAngle(x, y);
+                    mTempAngle = mStartAngle;
+                }
                 return true;
             case MotionEvent.ACTION_MOVE:
-                float diff = computeCurrentAngle(x, y) - mDownAngle;
-                mStartAngle = mTempAngle + diff;
-                requestLayout();
+                if (!isTouchOutOfBounds) {
+                    float diff = computeCurrentAngle(x, y) - mDownAngle;
+                    mStartAngle = mTempAngle + diff;
+                    requestLayout();
+                }
                 break;
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP:
-//                mDownAngle = 0;
+                if (isTouchOutOfBounds) {
+                    isTouchOutOfBounds = false;
+                    if (mListener != null) {
+                        mListener.onBackPressed();
+                    }
+                }
                 break;
         }
 
         return super.onTouchEvent(event);
+    }
+
+    private boolean isOutOfBounds(Context context, MotionEvent event) {
+        final int x = (int) event.getX();
+        final int y = (int) event.getY();
+        final int slop = ViewConfiguration.get(context).getScaledWindowTouchSlop();
+        int width = getWidth() + slop;
+        int height = getHeight() + slop;
+        if((x < -slop) || (y < -slop) || (x > width) || (y > height)) {
+            return true;
+        } else if ((x <= width) || (y <= height)) {
+            int a = x - mRadius;
+            int b = y - mRadius;
+            double radius = Math.sqrt(a * a + b * b);
+            if (radius > mRadius) {
+                Log.d(TAG, "huangqw onTouchEvent: isOutOfBounds radius = " + radius);
+                return true;
+            }
+        }
+        return false;
     }
 
     private float computeCurrentAngle(float x, float y) {
@@ -205,5 +257,9 @@ public class CircularDiskLayout extends ViewGroup {
                 }
             }
         }
+    }
+
+    interface OnBackPressedListener {
+        void onBackPressed();
     }
 }
