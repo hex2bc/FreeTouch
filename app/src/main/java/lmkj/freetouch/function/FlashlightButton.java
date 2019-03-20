@@ -1,8 +1,10 @@
 package lmkj.freetouch.function;
 
 import android.content.Context;
+import android.content.Intent;
 
 import lmkj.freetouch.DiskButtonInfo;
+import lmkj.freetouch.FloatButtonService;
 import lmkj.freetouch.R;
 
 public class FlashlightButton extends DiskButtonInfo {
@@ -22,6 +24,10 @@ public class FlashlightButton extends DiskButtonInfo {
 
     @Override
     public void execute(Context context) {
+
+        Intent service = (new Intent()).setClass(context, FloatButtonService.class);
+        context.startService(service);
+
         On = !On;
         if (On) {
             drawableId = mOn;
