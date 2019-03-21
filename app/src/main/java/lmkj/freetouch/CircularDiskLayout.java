@@ -1,5 +1,6 @@
 package lmkj.freetouch;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -7,9 +8,11 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageView;
 
 public class CircularDiskLayout extends ViewGroup {
@@ -22,6 +25,9 @@ public class CircularDiskLayout extends ViewGroup {
     protected State mState = State.NORMAL;
     private OnBackPressedListener mListener;
     private boolean isTouchOutOfBounds = false;
+    private VelocityTracker mVelocityTracker;
+    private boolean isClockwise = true;
+    private float mTempX = 0, mTempY = 0;
 
     public CircularDiskLayout(Context context) {
         this(context, null);
@@ -190,6 +196,7 @@ public class CircularDiskLayout extends ViewGroup {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        acquireVelocityTrackerAndAddMovement(event);
         float x = event.getX();
         float y = event.getY();
         switch (event.getAction()) {
@@ -202,8 +209,14 @@ public class CircularDiskLayout extends ViewGroup {
                 }
                 return true;
             case MotionEvent.ACTION_MOVE:
+                mVelocityTracker.computeCurrentVelocity(1000);
                 if (!isTouchOutOfBounds) {
                     float diff = computeCurrentAngle(x, y) - mDownAngle;
+                    // 矢量叉积和右手法则
+                    isClockwise = ((mTempX - mRadius) * (y - mRadius)
+                            - (mTempY - mRadius) * (x - mRadius)) > 0;
+                    mTempX = x;
+                    mTempY = y;
                     mStartAngle = mTempAngle + diff;
                     requestLayout();
                 }
@@ -215,11 +228,47 @@ public class CircularDiskLayout extends ViewGroup {
                     if (mListener != null) {
                         mListener.onBackPressed();
                     }
+                } else {
+                    float xv = Math.abs(mVelocityTracker.getXVelocity());
+                    float yv = Math.abs(mVelocityTracker.getYVelocity());
+                    if (xv > 200 || yv > 200) {
+                        slide();
+                    }
                 }
+                releaseVelocityTracker();
                 break;
         }
 
         return super.onTouchEvent(event);
+    }
+
+    private void slide() {
+        final ValueAnimator anim = ValueAnimator.ofFloat(mStartAngle, mStartAngle + (isClockwise ? 90 : -90                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 ));
+        anim.setDuration(800);
+        anim.setInterpolator(new DecelerateInterpolator());
+        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                mStartAngle = (float) animation.getAnimatedValue();
+                requestLayout();
+            }
+        });
+        anim.start();
+    }
+
+    private void acquireVelocityTrackerAndAddMovement(MotionEvent ev) {
+        if (mVelocityTracker == null) {
+            mVelocityTracker = VelocityTracker.obtain();
+        }
+        mVelocityTracker.addMovement(ev);
+    }
+
+    private void releaseVelocityTracker() {
+        if(null != mVelocityTracker) {
+            mVelocityTracker.clear();
+            mVelocityTracker.recycle();
+            mVelocityTracker = null;
+        }
     }
 
     private boolean isOutOfBounds(Context context, MotionEvent event) {
