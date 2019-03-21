@@ -29,6 +29,7 @@ public class DiskPresenter implements IDiskPresenter {
 
     @Override
     public void addButtonClick(int index) {
+        onBackPress();
         Log.d(TAG, "huangqw addButtonClick: ");
     }
 

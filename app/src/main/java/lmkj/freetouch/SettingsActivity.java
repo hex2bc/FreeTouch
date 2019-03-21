@@ -1,5 +1,6 @@
 package lmkj.freetouch;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.util.Log;
@@ -86,6 +87,10 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             replace.isFront = old.isFront;
 
             db.refreshDisk(replace);
+
+            Intent service = new Intent().setClass(this, FloatButtonService.class);
+            service.putExtra("FromSettings", true);
+            startService(service);
             finish();
         }
     }
