@@ -1,5 +1,7 @@
 package lmkj.freetouch;
 
+import android.animation.Animator;
+import android.animation.ValueAnimator;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -12,27 +14,29 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
+import android.view.animation.BounceInterpolator;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import java.util.ArrayList;
 
 import lmkj.freetouch.local.SaveObjectDataSource;
+import lmkj.freetouch.CircularDiskLayout.OnBackPressedListener;
 
 public class FloatButtonService extends Service implements View.OnClickListener, View.OnLongClickListener,
-        IDiskView{
+        IDiskView {
     private static final String TAG = "FloatKeyService";
     private WindowManager wm = null;
-    private float mOffset = 4f;
-    private float mOffsetX, mOffsetY;
-    private float mTStartsX, mTStartsY;
     private WindowManager.LayoutParams floatKeyParams = null;
-    private WindowManager.LayoutParams moreKeyParams = null;
 
     private ImageView floatView;
+    private int mScreenWidth;
+    private int mScreenHeight;
 
     private CircularDiskLayout mCircularDiskLayout;
     private DiskPresenter mDiskPresenter;
@@ -41,9 +45,10 @@ public class FloatButtonService extends Service implements View.OnClickListener,
     private Drawable mMidBtnDef;
     private Drawable mMidBtnChange;
 
-    private float mTouchStartX, mTouchStartY;
-    private float x, y;
-    boolean initViewPlace = false;
+    private float mTouchStartX = 0, mTouchStartY = 0;
+    private float mTouchOnBtnX = 0, mTouchOnBtnY = 0;
+    private int mSlop;
+    private boolean mOverMove = false;
 
     @Override
     public IBinder onBind(Intent arg0) {
@@ -51,9 +56,24 @@ public class FloatButtonService extends Service implements View.OnClickListener,
     }
 
     @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        boolean fromSetting = intent.getBooleanExtra("FromSettings", false);
+        if (fromSetting) {
+            initDiskView((int) mTouchStartX, (int) mTouchStartY - 280);
+        }
+        return super.onStartCommand(intent, flags, startId);
+    }
+
+    @Override
     public void onCreate() {
         super.onCreate();
+
         mContext = getApplicationContext();
+        mSlop = ViewConfiguration.get(mContext).getScaledWindowTouchSlop();
+        wm = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
+        mScreenWidth = wm.getDefaultDisplay().getWidth();
+        mScreenHeight = wm.getDefaultDisplay().getHeight();
+
         mDiskPresenter = new DiskPresenter(this, SaveObjectDataSource.getInstance(mContext));
         mMidBtnDef = mContext.getResources().getDrawable(R.drawable.ic_middle);
         mMidBtnChange = mContext.getResources().getDrawable(R.drawable.ic_change);
@@ -61,10 +81,10 @@ public class FloatButtonService extends Service implements View.OnClickListener,
     }
 
     private void createFloatButton() {
-        wm = (WindowManager) getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
+
         floatKeyParams = new WindowManager.LayoutParams();
-        floatKeyParams.x = 0;
-        floatKeyParams.y = 0;
+        floatKeyParams.x = mScreenWidth;
+        floatKeyParams.y = mScreenHeight / 2;
         floatKeyParams.format = PixelFormat.RGBA_8888;
         floatKeyParams.flags = WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM
                 | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
@@ -74,63 +94,75 @@ public class FloatButtonService extends Service implements View.OnClickListener,
         floatKeyParams.width = WindowManager.LayoutParams.WRAP_CONTENT;
         floatKeyParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
 
+        ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         floatView = new ImageView(getApplicationContext());
+        floatView.setLayoutParams(layoutParams);
         floatView.setImageResource(R.drawable.btn_floatkey);
 
-        initViewPlace = false;
-        floatView.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        if (!initViewPlace) {
-                            initViewPlace = true;
-                            mTouchStartX = event.getRawX();
-                            mTouchStartY = event.getRawY();
-                            x = event.getRawX();
-                            y = event.getRawY();
-                        } else {
-                            mTouchStartX += (event.getRawX() - x);
-                            mTouchStartY += (event.getRawY() - y);
-                        }
-                        mTStartsX = event.getRawX();
-                        mTStartsY = event.getRawY();
-                        break;
-                    case MotionEvent.ACTION_MOVE:
-                        x = event.getRawX();
-                        y = event.getRawY();
-                        updateViewPosition();
-                        break;
-
-                    case MotionEvent.ACTION_UP:
-                        mOffsetX = Math.abs(event.getRawX() - mTStartsX);
-                        mOffsetY = Math.abs(event.getRawY() - mTStartsY);
-                        if (mOffsetX < mOffset && mOffsetY < mOffset) {
-//                            floatView.setVisibility(View.GONE);
-//                            InitMoreKeyView();
-
-                            initDiskView();
-
-                        }
-
-                        break;
-                }
-                return false;
-            }
-        });
+        floatView.setOnTouchListener(mTouchListener);
 
         floatKeyParams.gravity = Gravity.LEFT | Gravity.TOP;
         wm.addView(floatView, floatKeyParams);
     }
 
+    View.OnTouchListener mTouchListener = new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View view, MotionEvent event) {
+            int x = (int) event.getRawX();
+            int y = (int) event.getRawY();
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    mTouchStartX = x;
+                    mTouchStartY = y;
+                    mTouchOnBtnX = event.getX();
+                    mTouchOnBtnY = event.getY();
+                    break;
+                case MotionEvent.ACTION_MOVE:
+                    float offsetX = Math.abs(x - mTouchStartX);
+                    float offsetY = Math.abs(y - mTouchStartY);
+                    if (offsetX > mSlop || offsetY > mSlop) {
+                        mOverMove = true;
+                    }
+                    updateViewPosition(x, y);
+                    break;
+                case MotionEvent.ACTION_CANCEL:
+                case MotionEvent.ACTION_UP:
+                    if (!mOverMove) {
+                        initDiskView(x, y - 280);
+                    } else {
+                        mOverMove = false;
+                    }
+                    autoKeepSide(x, y);
+                    break;
+            }
+            return false;
+        }
+    };
 
-    private void updateViewPosition() {
-        floatKeyParams.x = (int) (x - mTouchStartX);
-        floatKeyParams.y = (int) (y - mTouchStartY);
+    private void updateViewPosition(int x, int y) {
+        floatKeyParams.x = x - (int) mTouchOnBtnX;
+        floatKeyParams.y = y - (int) mTouchOnBtnY - 30;
         wm.updateViewLayout(floatView, floatKeyParams);
     }
 
-    private void initDiskView() {
+    private void autoKeepSide(int x, int y) {
+        final int endY = y;
+        int end = x < mScreenWidth / 2 ? 0 : mScreenWidth;
+        final ValueAnimator anim = ValueAnimator.ofInt(x, end);
+        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                int x = (int) animation.getAnimatedValue();
+                updateViewPosition(x, endY);
+            }
+        });
+        anim.start();
+    }
+
+    private void initDiskView(int x, int y) {
+        floatView.setVisibility(View.INVISIBLE);
+
         mCircularDiskLayout = new CircularDiskLayout(mContext);
         ViewGroup.LayoutParams lp = new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -145,27 +177,35 @@ public class FloatButtonService extends Service implements View.OnClickListener,
         mCircularDiskLayout.addView(mMidBtn);
 
         createView(mDiskPresenter.getLayoutView());
-        mCircularDiskLayout.setOnBackPressListener(new CircularDiskLayout.OnBackPressedListener() {
-            @Override
-            public void onBackPressed() {
-                if (mDiskPresenter.onBackPress()) {
-                    wm.removeView(mCircularDiskLayout);
-                }
-            }
-        });
+        mCircularDiskLayout.setOnBackPressListener(mOnBackPressedListener);
 
         WindowManager.LayoutParams diskParams = new WindowManager.LayoutParams();
-        diskParams.x = 0;
-        diskParams.y = 0;
+        diskParams.x = x;
+        diskParams.y = y;
         diskParams.format = PixelFormat.RGBA_8888;
         diskParams.flags = LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
-
         diskParams.type = LayoutParams.TYPE_TOAST;
         diskParams.width = WindowManager.LayoutParams.WRAP_CONTENT;
         diskParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
+        diskParams.gravity = Gravity.LEFT | Gravity.TOP;
         wm.addView(mCircularDiskLayout, diskParams);
-
     }
+
+    private void removeDiskView(boolean showFloatView) {
+        floatView.setVisibility(showFloatView ? View.VISIBLE : View.INVISIBLE);
+        if (mCircularDiskLayout != null) {
+            wm.removeView(mCircularDiskLayout);
+        }
+    }
+
+    OnBackPressedListener mOnBackPressedListener = new OnBackPressedListener() {
+        @Override
+        public void onBackPressed() {
+            if (mDiskPresenter.onBackPress()) {
+                removeDiskView(true);
+            }
+        }
+    };
 
     private void createView(ArrayList<DiskButtonInfo> DiskInfo) {
 
@@ -198,6 +238,7 @@ public class FloatButtonService extends Service implements View.OnClickListener,
                     intent.setClass(mContext, SettingsActivity.class);
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent);
+                    removeDiskView(false);
                 } else {
                     mDiskPresenter.deleteButtonClick(info);
                 }
