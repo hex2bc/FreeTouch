@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface IDiskPresenter {
     List<DiskButtonInfo> getLayoutView();
-    void addButtonClick(int index);
+    void addButtonClick(Context context, int index);
     void deleteButtonClick(DiskButtonInfo info);
     void moreButtonClick();
     void middleButtonClick();

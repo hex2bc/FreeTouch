@@ -28,9 +28,13 @@ public class DiskPresenter implements IDiskPresenter {
     }
 
     @Override
-    public void addButtonClick(int index) {
+    public void addButtonClick(Context context, int index) {
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.putExtra("index", index);
+        intent.setClass(context, SettingsActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        context.startActivity(intent);
         onBackPress();
-        Log.d(TAG, "huangqw addButtonClick: ");
     }
 
     @Override
@@ -76,6 +80,7 @@ public class DiskPresenter implements IDiskPresenter {
     @Override
     public void buttonClick(Context context, DiskButtonInfo info) {
         info.execute(context);
+        onBackPress();
     }
 
     @Override

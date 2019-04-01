@@ -243,7 +243,7 @@ public class CircularDiskLayout extends ViewGroup {
     }
 
     private void slide() {
-        final ValueAnimator anim = ValueAnimator.ofFloat(mStartAngle, mStartAngle + (isClockwise ? 90 : -90                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 ));
+        final ValueAnimator anim = ValueAnimator.ofFloat(mStartAngle, mStartAngle + (isClockwise ? 90 : -90 ));
         anim.setDuration(800);
         anim.setInterpolator(new DecelerateInterpolator());
         anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {

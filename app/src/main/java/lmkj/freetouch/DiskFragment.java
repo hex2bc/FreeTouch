@@ -102,11 +102,7 @@ public class DiskFragment extends Fragment implements View.OnClickListener, View
                 mDiskPresenter.moreButtonClick();
             } else if (mCircularDiskLayout.isModifyMode()) {
                 if (info.isRemove) {
-                    mDiskPresenter.addButtonClick(info.index);
-                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                    intent.putExtra("index", info.index);
-                    intent.setClass(getContext(), SettingsActivity.class);
-                    startActivityForResult(intent, 1);
+                    mDiskPresenter.addButtonClick(mContext, info.index);
                 } else {
                     mDiskPresenter.deleteButtonClick(info);
                 }

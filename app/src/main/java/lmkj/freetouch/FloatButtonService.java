@@ -59,7 +59,7 @@ public class FloatButtonService extends Service implements View.OnClickListener,
     public int onStartCommand(Intent intent, int flags, int startId) {
         boolean fromSetting = intent.getBooleanExtra("FromSettings", false);
         if (fromSetting) {
-            initDiskView((int) mTouchStartX, (int) mTouchStartY - 280);
+            initDiskView((int) mTouchStartY - 280);
         }
         return super.onStartCommand(intent, flags, startId);
     }
@@ -129,7 +129,7 @@ public class FloatButtonService extends Service implements View.OnClickListener,
                 case MotionEvent.ACTION_CANCEL:
                 case MotionEvent.ACTION_UP:
                     if (!mOverMove) {
-                        initDiskView(x, y - 280);
+                        initDiskView(y - 280);
                     } else {
                         mOverMove = false;
                     }
@@ -142,7 +142,7 @@ public class FloatButtonService extends Service implements View.OnClickListener,
 
     private void updateViewPosition(int x, int y) {
         floatKeyParams.x = x - (int) mTouchOnBtnX;
-        floatKeyParams.y = y - (int) mTouchOnBtnY - 30;
+        floatKeyParams.y = y - (int) mTouchOnBtnY;
         wm.updateViewLayout(floatView, floatKeyParams);
     }
 
@@ -160,7 +160,7 @@ public class FloatButtonService extends Service implements View.OnClickListener,
         anim.start();
     }
 
-    private void initDiskView(int x, int y) {
+    private void initDiskView(int y) {
         floatView.setVisibility(View.INVISIBLE);
 
         mCircularDiskLayout = new CircularDiskLayout(mContext);
@@ -180,14 +180,14 @@ public class FloatButtonService extends Service implements View.OnClickListener,
         mCircularDiskLayout.setOnBackPressListener(mOnBackPressedListener);
 
         WindowManager.LayoutParams diskParams = new WindowManager.LayoutParams();
-        diskParams.x = x;
+        diskParams.x = 0;
         diskParams.y = y;
         diskParams.format = PixelFormat.RGBA_8888;
         diskParams.flags = LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
         diskParams.type = LayoutParams.TYPE_TOAST;
         diskParams.width = WindowManager.LayoutParams.WRAP_CONTENT;
         diskParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
-        diskParams.gravity = Gravity.LEFT | Gravity.TOP;
+        diskParams.gravity = Gravity.CENTER_HORIZONTAL | Gravity.TOP;
         wm.addView(mCircularDiskLayout, diskParams);
     }
 
@@ -232,12 +232,7 @@ public class FloatButtonService extends Service implements View.OnClickListener,
                 mDiskPresenter.moreButtonClick();
             } else if (mCircularDiskLayout.isModifyMode()) {
                 if (info.isRemove) {
-                    mDiskPresenter.addButtonClick(info.index);
-                    Intent intent = new Intent(Intent.ACTION_MAIN);
-                    intent.putExtra("index", info.index);
-                    intent.setClass(mContext, SettingsActivity.class);
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(intent);
+                    mDiskPresenter.addButtonClick(mContext, info.index);
                     removeDiskView(false);
                 } else {
                     mDiskPresenter.deleteButtonClick(info);
@@ -245,6 +240,7 @@ public class FloatButtonService extends Service implements View.OnClickListener,
             } else {
                 int id = info.drawableId;
                 mDiskPresenter.buttonClick(mContext, info);
+                removeDiskView(true);
                 if (id != info.drawableId) {
                     ((BubbleTextView) v).createButtonFromInfo(info);
                 }

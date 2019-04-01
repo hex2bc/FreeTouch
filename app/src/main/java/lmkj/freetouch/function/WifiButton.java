@@ -1,8 +1,10 @@
 package lmkj.freetouch.function;
 
 import android.content.Context;
+import android.content.Intent;
 
 import lmkj.freetouch.DiskButtonInfo;
+import lmkj.freetouch.FloatButtonService;
 import lmkj.freetouch.R;
 
 public class WifiButton extends DiskButtonInfo {
